@@ -13,7 +13,9 @@ const dns = require('node:dns').promises;
 const vault = require('./vault');
 
 const ROOT = path.resolve(__dirname, '..');
-const WEB = path.join(ROOT, 'site');                               // the only folder visitors can read
+// The website sits in the project root next to the server code, so visitors may read ONLY these three files.
+// Everything else (server/, data/, keys/, README, package.json…) answers 404, even if someone guesses its path.
+const PUBLIC = new Set(['/index.html', '/styles.css', '/app.js']);
 const HTTP_PORT = Number(process.env.PORT) || 8081;
 const HTTPS_PORT = Number(process.env.HTTPS_PORT) || 8443;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -166,9 +168,9 @@ function serve(req, res) {
   let pathname;
   try { pathname = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { return text(res, 400, 'Bad request'); }
   if (pathname.endsWith('/')) pathname += 'index.html';
-  const file = path.resolve(WEB, '.' + pathname);
+  if (!PUBLIC.has(pathname)) return text(res, 404, 'Not found');      // exact allow-list: no ../, no hidden files, no guessing
+  const file = path.join(ROOT, pathname);
   const ext = path.extname(file).toLowerCase();
-  if (!file.startsWith(WEB + path.sep) || pathname.split('/').some(p => p.startsWith('.')) || !TYPES[ext]) return text(res, 404, 'Not found');
   fs.readFile(file, (err, buf) => {
     if (err) return text(res, 404, 'Not found');
     res.writeHead(200, { ...HEADERS, 'Content-Type': TYPES[ext], 'Cache-Control': 'no-cache' });

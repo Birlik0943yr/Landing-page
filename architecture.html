@@ -146,7 +146,7 @@ td.wrapcell { white-space: normal; font-family: var(--sans); font-size: 14px; }
   </header>
 
   <div class="layers">
-    <div><b>Browser</b><span><code>site/</code>: HTML says what is on the page, CSS how it looks, JS how it behaves.</span></div>
+    <div><b>Browser</b><span><code>index.html</code>, <code>styles.css</code>, <code>app.js</code>: HTML says what is on the page, CSS how it looks, JS how it behaves.</span></div>
     <div><b>Server</b><span><code>server.js</code>: serves the files and receives applications. Built-in Node modules only.</span></div>
     <div><b>Disk</b><span><code>vault.js</code>: encrypts and stores applications. The key is kept apart from the data.</span></div>
   </div>
@@ -410,7 +410,7 @@ td.wrapcell { white-space: normal; font-family: var(--sans); font-size: 14px; }
   <!-- 1 -->
   <section aria-labelledby="s1">
     <h2 id="s1"><span class="n">05</span>The whole system</h2>
-    <p>Three zones and one boundary. Everything that crosses the dotted line between browser and server travels over HTTPS. The <code>data/</code> and <code>keys/</code> folders sit outside <code>site/</code>, so a browser can never request them.</p>
+    <p>Three zones and one boundary. Everything that crosses the dotted line between browser and server travels over HTTPS. The server hands out only three files (<code>index.html</code>, <code>styles.css</code>, <code>app.js</code>), so a browser can never request <code>data/</code>, <code>keys/</code> or the server code.</p>
     <figure>
       <div class="scroll">
         <svg viewBox="0 0 1000 520" role="img" aria-label="System diagram: the browser requests files and sends an application over HTTPS to the server; the server validates it, vault.js encrypts it and writes it to the main log and a backup copy; the key lives in a separate folder; the owner reads the data with export.js in a terminal.">
@@ -446,7 +446,7 @@ td.wrapcell { white-space: normal; font-family: var(--sans); font-size: 14px; }
           <rect class="bx" x="340" y="58" width="270" height="40" rx="8"/>
           <text class="t" x="354" y="75">Router</text><text class="s" x="354" y="90">GET → files · POST → /api/apply</text>
           <rect class="bx" x="340" y="126" width="270" height="46" rx="8"/>
-          <text class="t" x="354" y="145">File serving</text><text class="s" x="354" y="161">site/ only · CSP and HSTS headers</text>
+          <text class="t" x="354" y="145">File serving</text><text class="s" x="354" y="161">3 public files only · CSP headers</text>
           <rect class="bx-acc" x="340" y="262" width="270" height="46" rx="8"/>
           <text class="t" x="354" y="281">/api/apply</text><text class="s" x="354" y="297">checks: 403 · 413 · 415 · 422 · 429</text>
           <rect class="bx-acc" x="340" y="330" width="270" height="70" rx="8"/>
@@ -736,9 +736,9 @@ td.wrapcell { white-space: normal; font-family: var(--sans); font-size: 14px; }
       <table>
         <thead><tr><th>File</th><th>Responsible for</th><th>Runs in</th></tr></thead>
         <tbody>
-          <tr><td>site/index.html</td><td>Structure: six sections, the form, the copy, the CSP policy in the &lt;head&gt;</td><td class="where">browser</td></tr>
-          <tr><td>site/styles.css</td><td>Look: palette, typography, grid, animation, the mobile layout</td><td class="where">browser</td></tr>
-          <tr><td>site/app.js</td><td>Programme tabs, the total, email checks and hints, sending with retry</td><td class="where">browser</td></tr>
+          <tr><td>index.html</td><td>Structure: six sections, the form, the copy, the CSP policy in the &lt;head&gt;</td><td class="where">browser</td></tr>
+          <tr><td>styles.css</td><td>Look: palette, typography, grid, animation, the mobile layout</td><td class="where">browser</td></tr>
+          <tr><td>app.js</td><td>Programme tabs, the total, email checks and hints, sending with retry</td><td class="where">browser</td></tr>
           <tr><td>server/server.js</td><td>File serving, security headers, HTTPS, the application checks, the DNS domain check</td><td class="where">server</td></tr>
           <tr><td>server/vault.js</td><td>Keys, encryption, fsync writes, the backup copy, the hash chain, recovery</td><td class="where">server</td></tr>
           <tr><td>server/export.js</td><td>Integrity check and decryption to CSV for the team</td><td class="where">owner's terminal</td></tr>
