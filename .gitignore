@@ -1,0 +1,6 @@
+# Applications, the encryption key and TLS keys never go into git
+data/
+keys/
+certs/
+*.csv
+.env

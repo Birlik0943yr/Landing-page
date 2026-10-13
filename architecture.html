@@ -1,0 +1,768 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STRATA Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a single technical reading column; each diagram sits on its own sheet, wide figures scroll inside it. */
+:root {
+  --bg: #eef0ec;
+  --surface: #ffffff;
+  --sheet: #f7f8f5;
+  --fg: #1a1d1f;
+  --muted: #5b6165;
+  --line: #c9cdc8;
+  --band-a: #eceee9;
+  --band-b: #e3e7e1;
+  --accent: #b24c27;
+  --ok: #1d7448;
+  --bad: #b3261e;
+  --warn: #8f5b00;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121416; --surface: #1a1d20; --sheet: #16191b; --fg: #e8eaea; --muted: #9ba1a5; --line: #363b3f;
+    --band-a: #1e2225; --band-b: #23282b; --accent: #e5875f; --ok: #55c08c; --bad: #f2766b; --warn: #e3ac4f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121416; --surface: #1a1d20; --sheet: #16191b; --fg: #e8eaea; --muted: #9ba1a5; --line: #363b3f;
+  --band-a: #1e2225; --band-b: #23282b; --accent: #e5875f; --ok: #55c08c; --bad: #f2766b; --warn: #e3ac4f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 16px/1.6 var(--sans); }
+.page { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 48px 72px; }
+h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; }
+p { margin: 0; }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+
+header.top { display: grid; gap: 14px; max-width: 760px; margin-bottom: 40px; }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; letter-spacing: -.02em; }
+.lede { font-size: 1.1rem; color: var(--muted); max-width: 66ch; }
+
+.layers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 56px; }
+.layers div { padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.layers b { display: block; font-size: 15px; margin-bottom: 4px; }
+.layers span { font-size: 14px; color: var(--muted); }
+
+section { margin-top: 64px; display: grid; gap: 16px; }
+section > h2 { font-size: clamp(1.4rem, 2.6vw, 1.8rem); font-weight: 600; letter-spacing: -.01em; display: flex; gap: 12px; align-items: baseline; }
+section > h2 .n { font: 500 14px var(--mono); color: var(--accent); }
+section > p { max-width: 70ch; color: var(--muted); }
+
+figure { margin: 8px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.scroll { overflow-x: auto; padding: 20px; }
+figure svg { display: block; width: 100%; height: auto; min-width: 720px; color: var(--fg); }
+figcaption { padding: 14px 20px 16px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); background: var(--sheet); }
+figcaption b { color: var(--fg); font-weight: 600; }
+
+/* --- svg vocabulary --- */
+svg text { font-family: var(--sans); }
+.zone { fill: none; stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.zl { font: 600 11px var(--mono); letter-spacing: .08em; fill: var(--muted); }
+.bx { fill: var(--sheet); stroke: var(--line); stroke-width: 1.2; }
+.bx-acc { fill: var(--surface); stroke: var(--accent); stroke-width: 1.8; }
+.bx-ok { fill: var(--surface); stroke: var(--ok); stroke-width: 1.8; }
+.t { font-size: 13px; font-weight: 600; fill: var(--fg); }
+.s { font-size: 11px; fill: var(--muted); }
+.m { font-family: var(--mono); font-size: 11.5px; fill: var(--fg); }
+.m-mut { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); }
+.m-acc { font-family: var(--mono); font-size: 11.5px; fill: var(--accent); font-weight: 500; }
+.lbl { font: 500 11px var(--mono); fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+.lbl-acc { fill: var(--accent); }
+.ln { fill: none; stroke: var(--fg); stroke-width: 1.4; }
+.ln-acc { fill: none; stroke: var(--accent); stroke-width: 2; }
+.ln-mut { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 4 3; }
+.ln-bad { fill: none; stroke: var(--bad); stroke-width: 1.4; }
+.ln-warn { fill: none; stroke: var(--warn); stroke-width: 1.4; }
+.ln-border { fill: none; stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 4; }
+.f-fg { fill: var(--fg); } .f-acc { fill: var(--accent); } .f-mut { fill: var(--muted); }
+.f-bad { fill: var(--bad); } .f-warn { fill: var(--warn); }
+.band-a { fill: var(--band-a); } .band-b { fill: var(--band-b); }
+.pill-bad { fill: var(--surface); stroke: var(--bad); stroke-width: 1.3; }
+.pill-warn { fill: var(--surface); stroke: var(--warn); stroke-width: 1.3; }
+.pill-mut { fill: var(--surface); stroke: var(--muted); stroke-width: 1.3; }
+.pill-t { font-size: 11px; fill: var(--fg); }
+.wf { fill: var(--sheet); stroke: var(--line); stroke-width: 1; }
+.wf-dark { fill: var(--fg); }
+.wf-dark-t { font: 600 11px var(--mono); fill: var(--surface); }
+.wf-acc { fill: var(--accent); }
+.wf-acc-t { font: 600 9px var(--sans); fill: #fff; }
+.frame { fill: var(--surface); stroke: var(--fg); stroke-width: 1.5; }
+.note-t { font-size: 13px; font-weight: 600; fill: var(--fg); }
+.note-acc { font-size: 13px; font-weight: 600; fill: var(--accent); }
+
+/* --- table + plan --- */
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
+th, td { text-align: left; vertical-align: top; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+th { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--sheet); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+td.where { color: var(--muted); }
+
+ol.recover, ol.plan { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; max-width: 760px; }
+ol.recover li, ol.plan li { counter-increment: s; display: grid; grid-template-columns: 2.25rem 1fr; gap: 12px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+ol.recover li::before, ol.plan li::before { content: counter(s); font: 600 14px var(--mono); color: var(--accent); }
+ol li b { display: block; }
+ol li span { color: var(--muted); font-size: 15px; }
+h3.sub { margin-top: 16px; font-size: 1.1rem; }
+
+/* --- DOM template additions --- */
+.dv { fill: none; stroke: var(--line); stroke-width: 1; }
+.bx-dash { fill: var(--sheet); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.leaf { fill: var(--surface); stroke: var(--fg); stroke-width: 1.3; }
+.leaf-acc { fill: var(--surface); stroke: var(--accent); stroke-width: 1.8; }
+figure svg.narrow { min-width: 0; max-width: 760px; margin-inline: auto; }
+.cards4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; padding: 0 20px 20px; }
+.cards4 div { padding: 14px 16px; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; color: var(--muted); }
+.cards4 b { display: block; margin-bottom: 4px; font: 600 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fg); }
+.cards4 .c-attr b { color: var(--accent); }
+.cards4 .c-val b { color: var(--ok); }
+.tablewrap td code { font-size: 12.5px; }
+td.wrapcell { white-space: normal; font-family: var(--sans); font-size: 14px; }
+.foot { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+
+@media (max-width: 720px) {
+  .layers { grid-template-columns: 1fr; }
+  .page { padding-block: 32px 56px; }
+}
+</style>
+
+<div class="page">
+
+  <header class="top">
+    <p class="eyebrow">STRATA · Web Applications · Architecture</p>
+    <h1>STRATA Architecture</h1>
+    <p class="lede">How the STRATA landing page is built, using the DOM model from class: page → body → sections → sub-sections → elements, where every element has a type, attributes and a value. Sections 01–04 describe the structure. Sections 05–10 follow the data: how a visitor moves, and the path an application takes from the button to an encrypted line on disk.</p>
+  </header>
+
+  <div class="layers">
+    <div><b>Browser</b><span><code>site/</code>: HTML says what is on the page, CSS how it looks, JS how it behaves.</span></div>
+    <div><b>Server</b><span><code>server.js</code>: serves the files and receives applications. Built-in Node modules only.</span></div>
+    <div><b>Disk</b><span><code>vault.js</code>: encrypts and stores applications. The key is kept apart from the data.</span></div>
+  </div>
+
+  <!-- N1 · page layout (board: page / body / subsec / subsubsec / elem) -->
+  <section aria-labelledby="n1">
+    <h2 id="n1"><span class="n">01</span>Page layout: from the board to our page</h2>
+    <p>The same model as the whiteboard. The page is the body. The body is cut into horizontal sections. Each section is cut into sub-sections, those into smaller groups, and the smallest pieces are elements. Here the <code>apply</code> section is opened up three levels.</p>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 -10 1000 610" role="img" aria-label="Left: the whole page as stacked sections: header, hero, audience, programme, outcomes, apply, FAQ, footer. The apply section opens into three sub-sections: apply-intro, the form, and the hidden confirmation. The form opens into seven sub-sub-sections, each listing the elements it contains.">
+          <defs>
+            <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="f-acc" d="M0 0L10 5L0 10z"/></marker>
+          </defs>
+
+          <text class="zl" x="20" y="8">PAGE → BODY → SECTIONS</text>
+          <text class="zl" x="380" y="8">SUB-SECTIONS OF "APPLY"</text>
+          <text class="zl" x="700" y="8">SUB-SUB-SECTIONS OF "FORM"</text>
+
+          <!-- page / body -->
+          <rect class="frame" x="20" y="20" width="280" height="560" rx="12"/>
+          <line class="dv" x1="20" y1="64" x2="300" y2="64"/>
+          <line class="dv" x1="20" y1="160" x2="300" y2="160"/>
+          <line class="dv" x1="20" y1="224" x2="300" y2="224"/>
+          <line class="dv" x1="20" y1="300" x2="300" y2="300"/>
+          <line class="dv" x1="20" y1="368" x2="300" y2="368"/>
+          <line class="dv" x1="20" y1="488" x2="300" y2="488"/>
+          <line class="dv" x1="20" y1="532" x2="300" y2="532"/>
+
+          <text class="t" x="36" y="47">header.nav</text>
+          <text class="t" x="36" y="104">section.hero</text><text class="s" x="36" y="122">h1 · lead · facts · 2 links · artwork</text>
+          <text class="t" x="36" y="188">section · audience</text><text class="s" x="36" y="206">h2 · 3 tiles</text>
+          <text class="t" x="36" y="252">section#programme</text><text class="s" x="36" y="270">h2 · 2 tabs · 2 day panels</text>
+          <text class="t" x="36" y="328">section#outcomes</text><text class="s" x="36" y="346">h2 · 3 rows</text>
+          <rect class="bx-acc" x="28" y="374" width="264" height="108" rx="8"/>
+          <text class="t" x="44" y="400">section#apply</text><text class="s" x="44" y="418">intro · form · confirmation</text>
+          <text class="m-acc" x="44" y="470">opened on the right →</text>
+          <text class="t" x="36" y="506">section#faq</text><text class="s" x="36" y="522">h2 · 5 details</text>
+          <text class="t" x="36" y="556">footer</text><text class="s" x="36" y="572">brand · 4 links · small</text>
+
+          <!-- apply → sub-sections -->
+          <rect class="bx" x="380" y="330" width="220" height="70" rx="8"/>
+          <text class="t" x="394" y="355">div.apply-intro</text>
+          <text class="s" x="394" y="373">h2 · p.lead · div.price</text>
+          <text class="s" x="394" y="389">text and price only</text>
+          <rect class="bx-acc" x="380" y="430" width="220" height="80" rx="8"/>
+          <text class="t" x="394" y="455">form#apply-form</text>
+          <text class="s" x="394" y="473">data-endpoint="/api/apply"</text>
+          <text class="s" x="394" y="491">novalidate · 7 groups</text>
+          <rect class="bx" x="380" y="530" width="220" height="44" rx="8"/>
+          <text class="t" x="394" y="550">div.done</text>
+          <text class="s" x="394" y="566">hidden until the server saves</text>
+
+          <path class="ln-acc" d="M292 428 C336 428, 336 365, 378 365" marker-end="url(#a5)"/>
+          <path class="ln-acc" d="M292 428 C336 428, 336 470, 378 470" marker-end="url(#a5)"/>
+          <path class="ln-acc" d="M292 428 C336 428, 336 552, 378 552" marker-end="url(#a5)"/>
+
+          <!-- form → sub-sub-sections -->
+          <path class="ln-acc" d="M600 470 C640 470, 640 278, 676 278"/>
+          <line class="ln-acc" x1="676" y1="122" x2="676" y2="434"/>
+          <g>
+            <line class="ln-acc" x1="676" y1="122" x2="697" y2="122" marker-end="url(#a5)"/>
+            <line class="ln-acc" x1="676" y1="174" x2="697" y2="174" marker-end="url(#a5)"/>
+            <line class="ln-acc" x1="676" y1="226" x2="697" y2="226" marker-end="url(#a5)"/>
+            <line class="ln-acc" x1="676" y1="278" x2="697" y2="278" marker-end="url(#a5)"/>
+            <line class="ln-acc" x1="676" y1="330" x2="697" y2="330" marker-end="url(#a5)"/>
+            <line class="ln-acc" x1="676" y1="382" x2="697" y2="382" marker-end="url(#a5)"/>
+            <line class="ln-acc" x1="676" y1="434" x2="697" y2="434" marker-end="url(#a5)"/>
+          </g>
+
+          <rect class="bx" x="700" y="100" width="280" height="44" rx="8"/>
+          <text class="t" x="714" y="119">fieldset.sessions</text><text class="m-mut" x="714" y="135">3 × input[type=radio]</text>
+          <rect class="bx" x="700" y="152" width="280" height="44" rx="8"/>
+          <text class="t" x="714" y="171">name row</text><text class="m-mut" x="714" y="187">input[firstName] · input[lastName]</text>
+          <rect class="bx" x="700" y="204" width="280" height="44" rx="8"/>
+          <text class="t" x="714" y="223">email field</text><text class="m-mut" x="714" y="239">input[type=email] · small.hint</text>
+          <rect class="bx" x="700" y="256" width="280" height="44" rx="8"/>
+          <text class="t" x="714" y="275">company · role</text><text class="m-mut" x="714" y="291">input[company] · select[role]</text>
+          <rect class="bx" x="700" y="308" width="280" height="44" rx="8"/>
+          <text class="t" x="714" y="327">seats · notes</text><text class="m-mut" x="714" y="343">input[type=number] · textarea</text>
+          <rect class="bx" x="700" y="360" width="280" height="44" rx="8"/>
+          <text class="t" x="714" y="379">honeypot · consent</text><text class="m-mut" x="714" y="395">input[website] · input[checkbox]</text>
+          <rect class="bx-acc" x="700" y="412" width="280" height="44" rx="8"/>
+          <text class="t" x="714" y="431">submit</text><text class="m-mut" x="714" y="447">button[type=submit] · p.form-status</text>
+
+          <text class="s" x="700" y="480">The lines of grey mono text are the elements: the leaves.</text>
+        </svg>
+      </div>
+      <figcaption><b>Read it left to right:</b> the page is the body, the body holds sections, a section holds sub-sections, and a sub-section holds groups of elements. Nothing is skipped: every element on the page sits inside exactly one parent. The next figure draws the same thing as a tree.</figcaption>
+    </figure>
+  </section>
+
+  <!-- N2 · DOM tree -->
+  <section aria-labelledby="n2">
+    <h2 id="n2"><span class="n">02</span>The DOM tree</h2>
+    <p>The DOM (Document Object Model) is the tree the browser builds from <code>index.html</code>. Rectangles are containers, ovals are leaf elements. Dashed boxes are branches that are folded to keep the figure readable. The red path is the branch that matters most: the application form.</p>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 1090 580" role="img" aria-label="DOM tree. The page contains body. Body has three parts: header, main and footer. Main has six sections: hero, audience, programme, outcomes, apply and FAQ. The hero opens into hero-copy and a figure; the apply section opens into apply-intro and the form. Leaves are ovals: h1, p, a, svg, h2, p, fieldset, input and button.">
+          <defs></defs>
+
+          <!-- level bands and labels -->
+          <g>
+            <line class="zone" x1="0" y1="66" x2="1090" y2="66"/>
+            <line class="zone" x1="0" y1="146" x2="1090" y2="146"/>
+            <line class="zone" x1="0" y1="240" x2="1090" y2="240"/>
+            <line class="zone" x1="0" y1="350" x2="1090" y2="350"/>
+            <line class="zone" x1="0" y1="462" x2="1090" y2="462"/>
+            <text class="zl" x="8" y="34">PAGE</text>
+            <text class="zl" x="8" y="104">BODY</text>
+            <text class="zl" x="8" y="194">PARTS</text>
+            <text class="zl" x="8" y="294">SECTIONS</text>
+            <text class="zl" x="8" y="404">SUBSECTIONS</text>
+            <text class="zl" x="8" y="524">ELEMENTS</text>
+          </g>
+
+          <g transform="translate(90,0)">
+            <!-- edges -->
+            <path class="ln" d="M500 48 L500 82"/>
+            <path class="ln" d="M500 118 C500 145, 90 145, 90 172"/>
+            <path class="ln" d="M500 118 L500 172"/>
+            <path class="ln" d="M500 118 C500 145, 910 145, 910 172"/>
+
+            <path class="ln" d="M500 208 C500 240, 150 240, 150 272"/>
+            <path class="ln" d="M500 208 C500 240, 290 240, 290 272"/>
+            <path class="ln" d="M500 208 C500 240, 430 240, 430 272"/>
+            <path class="ln" d="M500 208 C500 240, 570 240, 570 272"/>
+            <path class="ln-acc" d="M500 208 C500 240, 710 240, 710 272"/>
+            <path class="ln" d="M500 208 C500 240, 850 240, 850 272"/>
+
+            <path class="ln" d="M150 308 C150 345, 110 345, 110 382"/>
+            <path class="ln" d="M150 308 C150 345, 230 345, 230 382"/>
+            <path class="ln" d="M110 418 C110 458, 50 458, 50 498"/>
+            <path class="ln" d="M110 418 L110 498"/>
+            <path class="ln" d="M110 418 C110 458, 170 458, 170 498"/>
+            <path class="ln" d="M230 418 L230 498"/>
+
+            <path class="ln-acc" d="M710 308 C710 345, 640 345, 640 382"/>
+            <path class="ln-acc" d="M710 308 C710 345, 780 345, 780 382"/>
+            <path class="ln-acc" d="M640 418 C640 458, 575 458, 575 498"/>
+            <path class="ln-acc" d="M640 418 C640 458, 645 458, 645 498"/>
+            <path class="ln-acc" d="M780 418 C780 458, 720 458, 720 498"/>
+            <path class="ln-acc" d="M780 418 C780 458, 790 458, 790 498"/>
+            <path class="ln-acc" d="M780 418 C780 458, 860 458, 860 498"/>
+
+            <!-- nodes -->
+            <g text-anchor="middle">
+              <rect class="bx" x="440" y="12" width="120" height="36" rx="8"/><text class="t" x="500" y="34">page</text>
+              <rect class="bx" x="440" y="82" width="120" height="36" rx="8"/><text class="t" x="500" y="104">body</text>
+
+              <rect class="bx-dash" x="30" y="172" width="120" height="36" rx="8"/><text class="t" x="90" y="187">header.nav</text><text class="s" x="90" y="201">3 children</text>
+              <rect class="bx" x="440" y="172" width="120" height="36" rx="8"/><text class="t" x="500" y="187">main#top</text><text class="s" x="500" y="201">6 sections</text>
+              <rect class="bx-dash" x="850" y="172" width="120" height="36" rx="8"/><text class="t" x="910" y="187">footer</text><text class="s" x="910" y="201">3 children</text>
+
+              <rect class="bx" x="90" y="272" width="120" height="36" rx="8"/><text class="t" x="150" y="287">hero</text><text class="s" x="150" y="301">&lt;section&gt;</text>
+              <rect class="bx-dash" x="230" y="272" width="120" height="36" rx="8"/><text class="t" x="290" y="287">audience</text><text class="s" x="290" y="301">&lt;section&gt;</text>
+              <rect class="bx-dash" x="370" y="272" width="120" height="36" rx="8"/><text class="t" x="430" y="287">programme</text><text class="s" x="430" y="301">&lt;section&gt;</text>
+              <rect class="bx-dash" x="510" y="272" width="120" height="36" rx="8"/><text class="t" x="570" y="287">outcomes</text><text class="s" x="570" y="301">&lt;section&gt;</text>
+              <rect class="bx-acc" x="650" y="272" width="120" height="36" rx="8"/><text class="t" x="710" y="287">apply</text><text class="s" x="710" y="301">&lt;section&gt;</text>
+              <rect class="bx-dash" x="790" y="272" width="120" height="36" rx="8"/><text class="t" x="850" y="287">faq</text><text class="s" x="850" y="301">&lt;section&gt;</text>
+
+              <text class="s" x="290" y="326">h2 · ul · 3 tiles</text>
+              <text class="s" x="430" y="326">h2 · 2 tabs · 2 panels</text>
+              <text class="s" x="570" y="326">h2 · 3 articles</text>
+              <text class="s" x="850" y="326">h2 · 5 details</text>
+
+              <rect class="bx" x="60" y="382" width="100" height="36" rx="8"/><text class="t" x="110" y="397">hero-copy</text><text class="s" x="110" y="411">&lt;div&gt;</text>
+              <rect class="bx" x="180" y="382" width="100" height="36" rx="8"/><text class="t" x="230" y="397">artwork</text><text class="s" x="230" y="411">&lt;figure&gt;</text>
+              <rect class="bx-acc" x="590" y="382" width="100" height="36" rx="8"/><text class="t" x="640" y="397">intro</text><text class="s" x="640" y="411">&lt;div&gt;</text>
+              <rect class="bx-acc" x="730" y="382" width="100" height="36" rx="8"/><text class="t" x="780" y="397">form</text><text class="s" x="780" y="411">#apply-form</text>
+
+              <ellipse class="leaf" cx="50" cy="520" rx="28" ry="22"/><text class="m" x="50" y="524">h1</text>
+              <ellipse class="leaf" cx="110" cy="520" rx="28" ry="22"/><text class="m" x="110" y="524">p.lead</text>
+              <ellipse class="leaf" cx="170" cy="520" rx="28" ry="22"/><text class="m" x="170" y="524">a.btn</text>
+              <ellipse class="leaf" cx="230" cy="520" rx="28" ry="22"/><text class="m" x="230" y="524">svg</text>
+              <text class="s" x="110" y="566">+ dl.facts, a.link-arrow</text>
+
+              <ellipse class="leaf-acc" cx="575" cy="520" rx="28" ry="22"/><text class="m" x="575" y="524">h2</text>
+              <ellipse class="leaf-acc" cx="645" cy="520" rx="32" ry="22"/><text class="m" x="645" y="524">p.lead</text>
+              <text class="s" x="610" y="566">+ div.price</text>
+
+              <ellipse class="leaf-acc" cx="720" cy="520" rx="34" ry="22"/><text class="m" x="720" y="524">fieldset</text>
+              <ellipse class="leaf-acc" cx="790" cy="520" rx="34" ry="22"/><text class="m" x="790" y="524">input</text>
+              <ellipse class="leaf-acc" cx="860" cy="520" rx="34" ry="22"/><text class="m" x="860" y="524">button</text>
+              <text class="s" x="790" y="566">+ select, textarea, p.form-status</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>Rectangle</b> = a container with children. <b>Oval</b> = a leaf element that holds a value. <b>Dashed</b> = a branch folded to save space. A folded branch has the same shape as an open one: a heading, then its content. The hero and apply branches are open because they show both kinds of leaf, text and form controls.</figcaption>
+    </figure>
+  </section>
+
+  <!-- N3 · element anatomy -->
+  <section aria-labelledby="n3">
+    <h2 id="n3"><span class="n">03</span>Anatomy of one element</h2>
+    <p>Every node in the tree is an element, and every element has the same three parts from the board: a <b>type</b>, <b>attributes</b> (which is where <code>style</code> belongs) and a <b>value</b>. Here they are on the real "Reserve a seat" button.</p>
+    <figure>
+      <div class="scroll">
+        <svg class="narrow" viewBox="0 0 660 120" role="img" aria-label="The element a with class btn and href #apply and the text Reserve a seat, split into type, attributes, value and closing tag.">
+          <g font-family="IBM Plex Mono, ui-monospace, Consolas, monospace" font-size="20">
+            <text class="f-fg" x="40" y="40" textLength="24" lengthAdjust="spacingAndGlyphs">&lt;a</text>
+            <text class="f-acc" x="64" y="40" textLength="312" lengthAdjust="spacingAndGlyphs">&#160;class="btn" href="#apply"</text>
+            <text class="f-fg" x="376" y="40" textLength="12" lengthAdjust="spacingAndGlyphs">&gt;</text>
+            <text style="fill: var(--ok)" x="388" y="40" textLength="168" lengthAdjust="spacingAndGlyphs">Reserve a seat</text>
+            <text class="f-fg" x="556" y="40" textLength="48" lengthAdjust="spacingAndGlyphs">&lt;/a&gt;</text>
+          </g>
+          <path d="M40 54 v8 h24 v-8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <path class="ln-acc" d="M66 54 v8 h308 v-8"/>
+          <path d="M388 54 v8 h168 v-8" fill="none" stroke="var(--ok)" stroke-width="2"/>
+          <path d="M556 54 v8 h48 v-8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <g font-family="IBM Plex Mono, ui-monospace, Consolas, monospace" font-size="12" text-anchor="middle">
+            <text class="f-fg" x="52" y="84">type</text>
+            <text class="f-acc" x="220" y="84">attributes</text>
+            <text style="fill: var(--ok)" x="472" y="84">value</text>
+            <text class="f-fg" x="580" y="84">closing tag</text>
+          </g>
+        </svg>
+      </div>
+      <div class="cards4">
+        <div><b>Type</b>The tag name. It tells the browser what the element is: <code>a</code>, <code>h1</code>, <code>input</code>, <code>section</code>.</div>
+        <div class="c-attr"><b>Attributes</b>Name and value pairs inside the opening tag. <code>class</code> connects the element to rules in <code>styles.css</code>. We never use <code>style=""</code>: our Content-Security-Policy blocks it, so all styling lives in the CSS file.</div>
+        <div class="c-val"><b>Value</b>What the element holds: the text between the tags, or for an input, what the visitor typed. A container like <code>section</code> holds other elements instead.</div>
+        <div><b>Closing tag</b><code>&lt;/a&gt;</code> ends the element. Elements with no content, such as <code>input</code>, have no closing tag.</div>
+      </div>
+      <figcaption>The two forms of "body → text" on the board both appear here: a container holds elements, and a leaf holds a value.</figcaption>
+    </figure>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Element</th><th>Type</th><th>Attributes</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Headline</td><td><code>h1</code></td><td class="where">none</td><td class="wrapcell">"Build your organisation's AI strategy. In two days."</td></tr>
+          <tr><td>Main button</td><td><code>a</code></td><td><code>class="btn" href="#apply"</code></td><td class="wrapcell">"Reserve a seat"</td></tr>
+          <tr><td>Day tab</td><td><code>button</code></td><td><code>role="tab" aria-selected="true" aria-controls="day-1"</code></td><td class="wrapcell">"Day 1 Where AI creates value"</td></tr>
+          <tr><td>Email field</td><td><code>input</code></td><td><code>type="email" name="email" required maxlength="120"</code></td><td class="wrapcell">whatever the visitor types (<code>input.value</code>)</td></tr>
+          <tr><td>Apply section</td><td><code>section</code></td><td><code>id="apply" class="section section-apply"</code></td><td class="wrapcell">no text of its own, only child elements</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- N4 · how JS touches the tree -->
+  <section aria-labelledby="n4">
+    <h2 id="n4"><span class="n">04</span>How JavaScript changes the tree</h2>
+    <p><code>app.js</code> never rewrites the page. It finds one node with <code>querySelector</code> and changes one attribute or one value. Everything else stays as the HTML wrote it. It uses <code>textContent</code> and <code>createElement</code>, never <code>innerHTML</code>, so text from a visitor can never become markup.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Event</th><th>Node found</th><th>What changes</th><th>Kind</th></tr></thead>
+        <tbody>
+          <tr><td>Click a day tab</td><td><code>button[role=tab]</code>, <code>div.day</code></td><td class="wrapcell"><code>aria-selected</code>, <code>tabindex</code>, <code>hidden</code></td><td class="where wrapcell">attributes</td></tr>
+          <tr><td>Scroll into view</td><td><code>[data-reveal]</code></td><td class="wrapcell">class <code>in</code> is added, and CSS plays the animation</td><td class="where wrapcell">attribute (class)</td></tr>
+          <tr><td>Change seats</td><td><code>p.total b</code></td><td class="wrapcell"><code>textContent</code> becomes "€15,000"</td><td class="where wrapcell">value</td></tr>
+          <tr><td>Leave the email field</td><td><code>small#email-hint</code></td><td class="wrapcell">hint text, and a "did you mean" <code>button</code> child</td><td class="where wrapcell">value + new element</td></tr>
+          <tr><td>Server confirms the save</td><td><code>form</code>, <code>div.done</code>, <code>b.ref</code></td><td class="wrapcell"><code>form.hidden = true</code>, <code>done.hidden = false</code>, <code>ref.textContent</code> = reference</td><td class="where wrapcell">attributes + value</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section aria-labelledby="s1">
+    <h2 id="s1"><span class="n">05</span>The whole system</h2>
+    <p>Three zones and one boundary. Everything that crosses the dotted line between browser and server travels over HTTPS. The <code>data/</code> and <code>keys/</code> folders sit outside <code>site/</code>, so a browser can never request them.</p>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 1000 520" role="img" aria-label="System diagram: the browser requests files and sends an application over HTTPS to the server; the server validates it, vault.js encrypts it and writes it to the main log and a backup copy; the key lives in a separate folder; the owner reads the data with export.js in a terminal.">
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="f-fg" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="a1c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="f-acc" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="a1m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="f-mut" d="M0 0L10 5L0 10z"/></marker>
+          </defs>
+
+          <rect class="zone" x="10" y="30" width="250" height="380" rx="12"/>
+          <text class="zl" x="26" y="50">VISITOR'S BROWSER</text>
+          <rect class="zone" x="320" y="30" width="310" height="380" rx="12"/>
+          <text class="zl" x="336" y="50">SERVER · server.js</text>
+          <rect class="zone" x="690" y="30" width="300" height="380" rx="12"/>
+          <text class="zl" x="706" y="50">SERVER DISK</text>
+          <rect class="zone" x="690" y="430" width="300" height="80" rx="12"/>
+          <text class="zl" x="706" y="448">OWNER · TERMINAL</text>
+
+          <line class="ln-border" x1="290" y1="30" x2="290" y2="410"/>
+          <text class="lbl lbl-acc" x="290" y="20" text-anchor="middle">HTTPS · TLS 1.3</text>
+
+          <rect class="bx" x="28" y="58" width="214" height="40" rx="8"/>
+          <text class="t" x="42" y="75">index.html</text><text class="s" x="42" y="90">what is on the page</text>
+          <rect class="bx" x="28" y="126" width="214" height="46" rx="8"/>
+          <text class="t" x="42" y="145">styles.css</text><text class="s" x="42" y="161">how it looks</text>
+          <rect class="bx" x="28" y="190" width="214" height="46" rx="8"/>
+          <text class="t" x="42" y="209">app.js</text><text class="s" x="42" y="225">tabs, field checks, sending</text>
+          <rect class="bx-acc" x="28" y="262" width="214" height="46" rx="8"/>
+          <text class="t" x="42" y="281">Application form</text><text class="s" x="42" y="297">JSON + unique UUID</text>
+          <rect class="bx-ok" x="28" y="340" width="214" height="46" rx="8"/>
+          <text class="t" x="42" y="359">Confirmation screen</text><text class="s" x="42" y="375">reference ST-XXXX-XXXX</text>
+
+          <rect class="bx" x="340" y="58" width="270" height="40" rx="8"/>
+          <text class="t" x="354" y="75">Router</text><text class="s" x="354" y="90">GET → files · POST → /api/apply</text>
+          <rect class="bx" x="340" y="126" width="270" height="46" rx="8"/>
+          <text class="t" x="354" y="145">File serving</text><text class="s" x="354" y="161">site/ only · CSP and HSTS headers</text>
+          <rect class="bx-acc" x="340" y="262" width="270" height="46" rx="8"/>
+          <text class="t" x="354" y="281">/api/apply</text><text class="s" x="354" y="297">checks: 403 · 413 · 415 · 422 · 429</text>
+          <rect class="bx-acc" x="340" y="330" width="270" height="70" rx="8"/>
+          <text class="t" x="354" y="352">vault.js</text>
+          <text class="s" x="354" y="370">AES-256-GCM · hash chain</text>
+          <text class="s" x="354" y="386">duplicates found by HMAC fingerprint</text>
+
+          <rect class="bx" x="710" y="240" width="260" height="46" rx="8"/>
+          <text class="t" x="724" y="259">keys/secret.key</text><text class="s" x="724" y="275">the key: separate folder</text>
+          <rect class="bx" x="710" y="330" width="260" height="34" rx="8"/>
+          <text class="m" x="724" y="351">data/signups.jsonl</text>
+          <rect class="bx" x="710" y="368" width="260" height="34" rx="8"/>
+          <text class="m" x="724" y="389">data/backup/signups.jsonl</text>
+
+          <rect class="bx" x="710" y="458" width="260" height="40" rx="8"/>
+          <text class="t" x="724" y="475">export.js</text><text class="s" x="724" y="490">check · csv: verify and decrypt</text>
+
+          <line class="ln" x1="242" y1="78" x2="338" y2="78" marker-end="url(#a1)"/>
+          <text class="lbl" x="290" y="71" text-anchor="middle">GET</text>
+          <line class="ln" x1="475" y1="98" x2="475" y2="124" marker-end="url(#a1)"/>
+          <text class="lbl" x="483" y="115">file</text>
+          <line class="ln" x1="340" y1="149" x2="244" y2="149" marker-end="url(#a1)"/>
+          <text class="lbl" x="290" y="142" text-anchor="middle">files + CSP</text>
+
+          <line class="ln-acc" x1="242" y1="280" x2="338" y2="280" marker-end="url(#a1c)"/>
+          <text class="lbl lbl-acc" x="290" y="273" text-anchor="middle">POST JSON</text>
+          <line class="ln-acc" x1="475" y1="308" x2="475" y2="328" marker-end="url(#a1c)"/>
+          <text class="lbl lbl-acc" x="483" y="323">clean fields</text>
+          <line class="ln-acc" x1="610" y1="347" x2="708" y2="347" marker-end="url(#a1c)"/>
+          <text class="lbl lbl-acc" x="659" y="340" text-anchor="middle">1 · write</text>
+          <line class="ln-acc" x1="610" y1="385" x2="708" y2="385" marker-end="url(#a1c)"/>
+          <text class="lbl lbl-acc" x="659" y="378" text-anchor="middle">2 · copy</text>
+          <line class="ln-mut" x1="712" y1="288" x2="614" y2="330" marker-end="url(#a1m)"/>
+          <text class="lbl" x="676" y="300" text-anchor="middle">key</text>
+          <line class="ln" x1="340" y1="300" x2="244" y2="356" marker-end="url(#a1)"/>
+          <text class="lbl" x="296" y="338" text-anchor="middle">200 · reference</text>
+
+          <line class="ln-mut" x1="840" y1="402" x2="840" y2="456" marker-end="url(#a1m)"/>
+          <text class="lbl" x="848" y="424">reads + key</text>
+        </svg>
+      </div>
+      <figcaption><b>The red path is the application data.</b> The server answers "200 · reference" only after the record and its copy are on disk. The router hands POST requests to <code>/api/apply</code>; the diagram draws that arrow directly to keep the figure readable. <code>export.js</code> runs only in the server's terminal and cannot be reached through the website.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 2 -->
+  <section aria-labelledby="s2">
+    <h2 id="s2"><span class="n">06</span>How a visitor moves</h2>
+    <p>The page is one long strip of six sections with one goal: get the visitor to apply. That is why every main button leads to the same place, section 5.</p>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 760 600" role="img" aria-label="Page skeleton from top to bottom: navigation, hero, audience, programme, outcomes, apply, FAQ, footer. Three buttons, in the navigation, the hero and the footer, lead to the apply section; the See the programme link leads to the programme.">
+          <defs>
+            <marker id="a2c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="f-acc" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="a2m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="f-mut" d="M0 0L10 5L0 10z"/></marker>
+          </defs>
+
+          <rect class="frame" x="40" y="16" width="320" height="572" rx="14"/>
+
+          <rect class="wf" x="52" y="28" width="296" height="30" rx="6"/>
+          <text class="m" x="62" y="47">nav · STRATA</text>
+          <rect class="wf-acc" x="270" y="34" width="70" height="18" rx="9"/>
+          <text class="wf-acc-t" x="305" y="46" text-anchor="middle">Reserve</text>
+
+          <rect class="wf" x="52" y="66" width="296" height="104" rx="6"/>
+          <text class="m" x="62" y="86">1 · hero</text>
+          <rect class="wf" x="62" y="96" width="190" height="10" rx="2"/>
+          <rect class="wf" x="62" y="112" width="150" height="10" rx="2"/>
+          <text class="m-mut" x="62" y="134">2 days · €5,000 · Feb/May/Sep</text>
+          <rect class="wf-acc" x="62" y="142" width="96" height="20" rx="10"/>
+          <text class="wf-acc-t" x="110" y="155" text-anchor="middle">Reserve a seat</text>
+          <text class="m-acc" x="168" y="156">See programme</text>
+
+          <rect class="wf" x="52" y="178" width="296" height="58" rx="6"/>
+          <text class="m" x="62" y="196">2 · audience</text>
+          <rect class="wf" x="62" y="204" width="86" height="24" rx="4"/>
+          <rect class="wf" x="157" y="204" width="86" height="24" rx="4"/>
+          <rect class="wf" x="252" y="204" width="86" height="24" rx="4"/>
+
+          <rect class="wf-dark" x="52" y="244" width="296" height="78" rx="6"/>
+          <text class="wf-dark-t" x="62" y="263">3 · programme</text>
+          <rect class="wf" x="62" y="274" width="64" height="18" rx="9"/>
+          <text class="m" x="94" y="287" text-anchor="middle" font-size="10">Day 1</text>
+          <text class="wf-dark-t" x="160" y="287" text-anchor="middle">Day 2</text>
+          <rect class="wf" x="62" y="300" width="270" height="8" rx="2" opacity=".35"/>
+
+          <rect class="wf" x="52" y="330" width="296" height="58" rx="6"/>
+          <text class="m" x="62" y="348">4 · outcomes</text>
+          <rect class="wf" x="62" y="356" width="276" height="10" rx="2"/>
+          <rect class="wf" x="62" y="371" width="276" height="10" rx="2"/>
+
+          <rect class="bx-acc" x="52" y="396" width="296" height="100" rx="6"/>
+          <text class="m-acc" x="62" y="415">5 · apply</text>
+          <rect class="wf" x="62" y="424" width="84" height="22" rx="5"/>
+          <rect class="wf" x="154" y="424" width="84" height="22" rx="5"/>
+          <rect class="wf" x="246" y="424" width="84" height="22" rx="5"/>
+          <rect class="wf" x="62" y="452" width="268" height="12" rx="3"/>
+          <rect class="wf-acc" x="62" y="470" width="96" height="18" rx="9"/>
+          <text class="wf-acc-t" x="110" y="482" text-anchor="middle">Request my seat</text>
+
+          <rect class="wf" x="52" y="504" width="296" height="40" rx="6"/>
+          <text class="m" x="62" y="528">6 · FAQ</text>
+          <rect class="wf" x="52" y="552" width="296" height="26" rx="6"/>
+          <text class="m" x="62" y="569">footer</text>
+          <text class="m-acc" x="300" y="569">Apply</text>
+
+          <path class="ln-acc" d="M340 43 C 425 43, 425 430, 350 430" marker-end="url(#a2c)"/>
+          <path class="ln-acc" d="M348 152 C 398 152, 398 446, 350 446" marker-end="url(#a2c)"/>
+          <path class="ln-acc" d="M340 565 C 410 565, 410 462, 350 462" marker-end="url(#a2c)"/>
+          <path class="ln-mut" d="M348 158 C 372 158, 372 283, 350 283" marker-end="url(#a2m)"/>
+
+          <text class="note-t" x="450" y="47">Brand, anchors, button</text>
+          <text class="note-t" x="450" y="114">The promise in 5 seconds</text>
+          <text class="s" x="450" y="130">headline · 3 facts · main button</text>
+          <text class="note-t" x="450" y="203">Who it is for</text>
+          <text class="s" x="450" y="219">3 tiles: C-level, global, ready to act</text>
+          <text class="note-t" x="450" y="279">Programme</text>
+          <text class="s" x="450" y="295">Day 1 / Day 2 tabs (app.js, ← → keys)</text>
+          <text class="note-t" x="450" y="355">What you get</text>
+          <text class="s" x="450" y="371">strategy · ranked use cases · 12-month roadmap</text>
+          <text class="note-acc" x="450" y="442">Apply: the goal of the page</text>
+          <text class="s" x="450" y="458">session · contact · seats → POST /api/apply</text>
+          <text class="note-t" x="450" y="520">FAQ</text>
+          <text class="s" x="450" y="536">&lt;details&gt;: works without JavaScript</text>
+          <text class="s" x="450" y="569">links · template licence (MIT)</text>
+        </svg>
+      </div>
+      <figcaption><b>The red arcs are the three "Reserve / Apply" buttons</b>, and all of them lead to section 5. The dotted grey arc is the "See the programme" link. This is the answer to "make it pop": the accent colour appears only on actions, and every action leads to the form.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 3 -->
+  <section aria-labelledby="s3">
+    <h2 id="s3"><span class="n">07</span>The path of an application</h2>
+    <p>Thirteen steps from pressing the button to the confirmation screen. Each check can stop the application, and the right-hand side shows how. The order matters: cheap checks come first, so a junk request never reaches the DNS lookup or the disk.</p>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 820 712" role="img" aria-label="Application pipeline: browser check, send over HTTPS with retry, six server checks, duplicate check, encryption, write with fsync, backup copy and confirmation screen. Every check lists the response when it fails.">
+          <defs>
+            <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="f-fg" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="a3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="f-bad" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="a3w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="f-warn" d="M0 0L10 5L0 10z"/></marker>
+            <marker id="a3m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="f-mut" d="M0 0L10 5L0 10z"/></marker>
+          </defs>
+
+          <rect class="band-a" x="8" y="14" width="804" height="106" rx="8"/>
+          <rect class="band-b" x="8" y="122" width="804" height="314" rx="8"/>
+          <rect class="band-a" x="8" y="438" width="804" height="210" rx="8"/>
+          <rect class="band-b" x="8" y="650" width="804" height="54" rx="8"/>
+          <text class="zl" x="20" y="36">BROWSER</text>
+          <text class="s" x="20" y="52">app.js</text>
+          <text class="zl" x="20" y="144">SERVER</text>
+          <text class="s" x="20" y="160">server.js</text>
+          <text class="zl" x="20" y="460">STORAGE</text>
+          <text class="s" x="20" y="476">vault.js</text>
+          <text class="zl" x="20" y="672">BROWSER</text>
+
+          <g>
+            <rect class="bx" x="130" y="24" width="320" height="36" rx="7"/><text class="t" x="144" y="47">Field checks in the browser</text>
+            <rect class="bx" x="130" y="76" width="320" height="36" rx="7"/><text class="t" x="144" y="99">POST JSON + UUID over HTTPS</text>
+            <rect class="bx" x="130" y="128" width="320" height="36" rx="7"/><text class="t" x="144" y="151">Origin: is it our own site?</text>
+            <rect class="bx" x="130" y="180" width="320" height="36" rx="7"/><text class="t" x="144" y="203">Content-Type: is it JSON?</text>
+            <rect class="bx" x="130" y="232" width="320" height="36" rx="7"/><text class="t" x="144" y="255">Body size ≤ 4 KB?</text>
+            <rect class="bx" x="130" y="284" width="320" height="36" rx="7"/><text class="t" x="144" y="307">≤ 10 requests per 10 min per IP?</text>
+            <rect class="bx" x="130" y="336" width="320" height="36" rx="7"/><text class="t" x="144" y="359">Allow-lists; extra fields dropped</text>
+            <rect class="bx" x="130" y="388" width="320" height="36" rx="7"/><text class="t" x="144" y="411">Does the email domain take mail? (DNS MX)</text>
+            <rect class="bx" x="130" y="440" width="320" height="36" rx="7"/><text class="t" x="144" y="463">Duplicate? (UUID or email + session)</text>
+            <rect class="bx-acc" x="130" y="492" width="320" height="36" rx="7"/><text class="t" x="144" y="515">Encrypt with AES-256-GCM</text>
+            <rect class="bx-acc" x="130" y="544" width="320" height="36" rx="7"/><text class="t" x="144" y="567">Append to signups.jsonl + fsync</text>
+            <rect class="bx-acc" x="130" y="596" width="320" height="36" rx="7"/><text class="t" x="144" y="619">Copy to backup/ + fsync</text>
+            <rect class="bx-ok" x="130" y="660" width="320" height="36" rx="7"/><text class="t" x="144" y="683">"Request received" screen + reference</text>
+          </g>
+
+          <g>
+            <line class="ln" x1="290" y1="60" x2="290" y2="74" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="112" x2="290" y2="126" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="164" x2="290" y2="178" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="216" x2="290" y2="230" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="268" x2="290" y2="282" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="320" x2="290" y2="334" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="372" x2="290" y2="386" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="424" x2="290" y2="438" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="476" x2="290" y2="490" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="528" x2="290" y2="542" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="580" x2="290" y2="594" marker-end="url(#a3)"/>
+            <line class="ln" x1="290" y1="632" x2="290" y2="658" marker-end="url(#a3)"/>
+            <text class="lbl" x="298" y="650">200 { ref }</text>
+          </g>
+
+          <g>
+            <line class="ln-bad" x1="450" y1="42" x2="498" y2="42" marker-end="url(#a3b)"/>
+            <rect class="pill-bad" x="500" y="28" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="46">field highlighted, request not sent</text>
+
+            <line class="ln-warn" x1="450" y1="94" x2="498" y2="94" marker-end="url(#a3w)"/>
+            <rect class="pill-warn" x="500" y="80" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="98">network error → retry 1s · 2s · 4s, same UUID</text>
+
+            <line class="ln-bad" x1="450" y1="146" x2="498" y2="146" marker-end="url(#a3b)"/>
+            <rect class="pill-bad" x="500" y="132" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="150">403 · request from another site (CSRF)</text>
+
+            <line class="ln-bad" x1="450" y1="198" x2="498" y2="198" marker-end="url(#a3b)"/>
+            <rect class="pill-bad" x="500" y="184" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="202">415 · wrong format</text>
+
+            <line class="ln-bad" x1="450" y1="250" x2="498" y2="250" marker-end="url(#a3b)"/>
+            <rect class="pill-bad" x="500" y="236" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="254">413 · too large, connection dropped</text>
+
+            <line class="ln-bad" x1="450" y1="302" x2="498" y2="302" marker-end="url(#a3b)"/>
+            <rect class="pill-bad" x="500" y="288" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="306">429 · "please wait a few minutes"</text>
+
+            <line class="ln-bad" x1="450" y1="354" x2="498" y2="354" marker-end="url(#a3b)"/>
+            <rect class="pill-bad" x="500" y="340" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="358">422 + field list, the browser highlights them</text>
+
+            <line class="ln-bad" x1="450" y1="406" x2="498" y2="406" marker-end="url(#a3b)"/>
+            <rect class="pill-bad" x="500" y="392" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="410">422 · emailDomain: "check the part after @"</text>
+
+            <line class="ln-mut" x1="450" y1="458" x2="498" y2="458" marker-end="url(#a3m)"/>
+            <rect class="pill-mut" x="500" y="444" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="462">200 · same reference, no new record</text>
+
+            <line class="ln-warn" x1="450" y1="562" x2="498" y2="562" marker-end="url(#a3w)"/>
+            <rect class="pill-warn" x="500" y="548" width="300" height="28" rx="14"/><text class="pill-t" x="514" y="566">disk error → 503, the browser retries</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>A red exit</b> means the application is rejected and nothing is saved. <b>Amber</b> is a temporary failure: the browser retries with the same UUID, so no duplicate appears. <b>Grey</b> means this application already exists, and the person gets their original reference. The confirmation screen appears only after step 12.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 4 -->
+  <section aria-labelledby="s4">
+    <h2 id="s4"><span class="n">08</span>How an application is stored</h2>
+    <p>One application is one JSON line in an append-only file. The name, email and company never appear in plain text: they are inside <code>ct</code>. Each line holds the hash of the line before it, so a line cannot be removed or altered without being noticed.</p>
+    <figure>
+      <div class="scroll">
+        <svg viewBox="0 0 900 252" role="img" aria-label="Three consecutive log records. Each holds an id, a timestamp, an HMAC fingerprint, prev (the hash of the previous record) and an encrypted block of iv, tag and ct. The prev of record 2 points to record 1, and the prev of record 3 points to record 2.">
+          <defs>
+            <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="f-acc" d="M0 0L10 5L0 10z"/></marker>
+          </defs>
+
+          <rect class="bx" x="20" y="30" width="260" height="200" rx="10"/>
+          <text class="zl" x="36" y="52">RECORD 1</text>
+          <text class="m-mut" x="36" y="80">id</text><text class="m" x="90" y="80">6aa6…5194</text>
+          <text class="m-mut" x="36" y="102">at</text><text class="m" x="90" y="102">2026-10-12 06:30</text>
+          <text class="m-mut" x="36" y="124">fp</text><text class="m" x="90" y="124">89b5…0ca9</text>
+          <text class="m-mut" x="36" y="146">prev</text><text class="m" x="90" y="146">0000…0000</text>
+          <text class="m-mut" x="36" y="168">iv</text><text class="m" x="90" y="168">uaP7…/LO</text>
+          <text class="m-mut" x="36" y="190">tag</text><text class="m" x="90" y="190">NcNJ…W91A</text>
+          <text class="m-mut" x="36" y="212">ct</text><text class="m-acc" x="90" y="212">444F…ZgQ  cipher</text>
+
+          <rect class="bx" x="320" y="30" width="260" height="200" rx="10"/>
+          <text class="zl" x="336" y="52">RECORD 2</text>
+          <text class="m-mut" x="336" y="80">id</text><text class="m" x="390" y="80">c1d0…77ab</text>
+          <text class="m-mut" x="336" y="102">at</text><text class="m" x="390" y="102">2026-10-12 06:31</text>
+          <text class="m-mut" x="336" y="124">fp</text><text class="m" x="390" y="124">2f4e…91c3</text>
+          <text class="m-mut" x="336" y="146">prev</text><text class="m-acc" x="390" y="146">sha256(record 1)</text>
+          <text class="m-mut" x="336" y="168">iv</text><text class="m" x="390" y="168">Qe1x…k9Tb</text>
+          <text class="m-mut" x="336" y="190">tag</text><text class="m" x="390" y="190">h7Ra…cQ==</text>
+          <text class="m-mut" x="336" y="212">ct</text><text class="m-acc" x="390" y="212">9LmA…pX2  cipher</text>
+
+          <rect class="bx" x="620" y="30" width="260" height="200" rx="10"/>
+          <text class="zl" x="636" y="52">RECORD 3</text>
+          <text class="m-mut" x="636" y="80">id</text><text class="m" x="690" y="80">5e83…0f2d</text>
+          <text class="m-mut" x="636" y="102">at</text><text class="m" x="690" y="102">2026-10-12 06:38</text>
+          <text class="m-mut" x="636" y="124">fp</text><text class="m" x="690" y="124">a03b…6e18</text>
+          <text class="m-mut" x="636" y="146">prev</text><text class="m-acc" x="690" y="146">sha256(record 2)</text>
+          <text class="m-mut" x="636" y="168">iv</text><text class="m" x="690" y="168">Zt0p…Rw4M</text>
+          <text class="m-mut" x="636" y="190">tag</text><text class="m" x="690" y="190">Ub3s…0g==</text>
+          <text class="m-mut" x="636" y="212">ct</text><text class="m-acc" x="690" y="212">Kk7d…Qe5  cipher</text>
+
+          <line class="ln-acc" x1="320" y1="142" x2="284" y2="142" marker-end="url(#a4)"/>
+          <line class="ln-acc" x1="620" y1="142" x2="584" y2="142" marker-end="url(#a4)"/>
+        </svg>
+      </div>
+      <figcaption><b>fp</b> is an HMAC fingerprint of "email + session", so duplicates are found without decrypting anything. <b>iv</b> is a fresh random number for every record. <b>tag</b> breaks if a single bit of the cipher changes. <b>prev</b> links the records into a chain. Values in the figure are shortened.</figcaption>
+    </figure>
+
+    <h3 class="sub">What the server does at start-up</h3>
+    <ol class="recover">
+      <li><div><b>Cuts off an unfinished line</b><span>If the server crashed mid-write, the tail with no line break is removed. A copy of it is kept in a <code>.crash-…</code> file, so nothing is deleted silently.</span></div></li>
+      <li><div><b>Compares the log with the backup</b><span>If the main file is missing or shorter than an intact backup, it is restored from <code>backup/</code>.</span></div></li>
+      <li><div><b>Checks the chain and builds the indexes</b><span>Loads every UUID and fingerprint into memory so repeats and duplicates are found without decrypting. Any break in the chain is written to the log.</span></div></li>
+    </ol>
+  </section>
+
+  <!-- 5 -->
+  <section aria-labelledby="s5">
+    <h2 id="s5"><span class="n">09</span>Files and responsibilities</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>File</th><th>Responsible for</th><th>Runs in</th></tr></thead>
+        <tbody>
+          <tr><td>site/index.html</td><td>Structure: six sections, the form, the copy, the CSP policy in the &lt;head&gt;</td><td class="where">browser</td></tr>
+          <tr><td>site/styles.css</td><td>Look: palette, typography, grid, animation, the mobile layout</td><td class="where">browser</td></tr>
+          <tr><td>site/app.js</td><td>Programme tabs, the total, email checks and hints, sending with retry</td><td class="where">browser</td></tr>
+          <tr><td>server/server.js</td><td>File serving, security headers, HTTPS, the application checks, the DNS domain check</td><td class="where">server</td></tr>
+          <tr><td>server/vault.js</td><td>Keys, encryption, fsync writes, the backup copy, the hash chain, recovery</td><td class="where">server</td></tr>
+          <tr><td>server/export.js</td><td>Integrity check and decryption to CSV for the team</td><td class="where">owner's terminal</td></tr>
+          <tr><td>data/</td><td>The encrypted log and its backup</td><td class="where">disk, not in git</td></tr>
+          <tr><td>keys/secret.key</td><td>The master key. Lose the key, lose the data</td><td class="where">disk, not in git</td></tr>
+          <tr><td>certs/</td><td>Local certificate for HTTPS</td><td class="where">disk, not in git</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section aria-labelledby="s6">
+    <h2 id="s6"><span class="n">10</span>Plan: what comes next</h2>
+    <p>Everything works locally today. To accept real applications, these steps come next, in this order.</p>
+    <ol class="plan">
+      <li><div><b>Hosting with HTTPS</b><span>A server or VPS with Node 20+, a domain, and a free Let's Encrypt certificate instead of the self-signed one.</span></div></li>
+      <li><div><b>Move the key to an environment variable</b><span><code>SIGNUP_KEY</code> instead of a file, with a copy in a password manager rather than on this server.</span></div></li>
+      <li><div><b>Back up to another machine</b><span>Regularly move <code>data/backup/</code> elsewhere: a copy on the same disk does not survive that disk failing.</span></div></li>
+      <li><div><b>Confirmation email</b><span>Only an email proves a mailbox exists. The DNS check proves only that the domain accepts mail.</span></div></li>
+      <li><div><b>Privacy policy and deletion</b><span>A Privacy page, a retention period and a way to delete data on request (GDPR), agreed with the client.</span></div></li>
+      <li><div><b>Details from the client</b><span>Exact session dates, venue and faculty. They are not on the site yet because the brief did not include them.</span></div></li>
+    </ol>
+  </section>
+
+  <p class="foot">STRATA is a course project for Web Applications. The section structure is adapted from the Start Bootstrap "Landing Page" template (MIT) and rewritten without third-party dependencies.</p>
+</div>

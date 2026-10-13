@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f2ec">
+  <!-- Only our own files, and data may go to our own server only. No CDNs, no third-party form services. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="description" content="STRATA: a two-day workshop for C-level executives on building an AI strategy for their organisation. €5,000 per seat. February, May and September.">
+  <title>STRATA — AI Strategy for Executives</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d1f22'/%3E%3Cpath d='M7 12h18M7 17h14M7 22h9' stroke='%23c4592f' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+
+<!-- Layout adapted from Start Bootstrap "Landing Page" (MIT): navbar → masthead → icons grid →
+     showcases → call to action → footer. Rewritten in plain HTML/CSS/JS: the original loads three CDNs
+     and posts its form to a third-party service, which our security rules don't allow.
+
+     page
+     ├─ nav                 brand · links · one button
+     ├─ 1 masthead          promise + 3 facts + button        | strata artwork
+     ├─ 2 audience          who it is for (icons grid)
+     ├─ 3 programme         Day 1 / Day 2 switch (showcase)
+     ├─ 4 outcomes          what you leave with (showcase)
+     ├─ 5 apply             session choice + form (call to action)
+     ├─ 6 faq
+     └─ footer -->
+<body>
+
+  <a class="skip" href="#apply">Skip to application</a>
+
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top" aria-label="STRATA, back to top">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 11h22M5 16h16M5 21h10"/></svg>
+        STRATA
+      </a>
+      <nav aria-label="Primary">
+        <a href="#programme">Programme</a>
+        <a href="#outcomes">Outcomes</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="btn btn-small" href="#apply">Reserve a seat</a>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- 1 · MASTHEAD -->
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="kicker">Executive workshop · Two days</p>
+          <h1>Build your organisation's AI strategy. In two days.</h1>
+          <p class="lead">A working session for C-level leaders of multinational and global companies. You arrive with your business. You leave with a strategy your board can approve.</p>
+
+          <dl class="facts">
+            <div><dt>Format</dt><dd>2 days, in person</dd></div>
+            <div><dt>Investment</dt><dd>€5,000 <small>per seat</small></dd></div>
+            <div><dt>Sessions</dt><dd>Feb · May · Sep</dd></div>
+          </dl>
+
+          <div class="actions">
+            <a class="btn" href="#apply">Reserve a seat</a>
+            <a class="link-arrow" href="#programme">See the programme</a>
+          </div>
+        </div>
+
+        <figure class="strata-art" aria-hidden="true">
+          <svg viewBox="0 0 520 560">
+            <g class="layers">
+              <path class="l l1" d="M20 470 C 140 430, 260 500, 500 440" />
+              <path class="l l2" d="M20 410 C 150 360, 270 440, 500 370" />
+              <path class="l l3" d="M20 350 C 160 300, 280 380, 500 300" />
+              <path class="l l4 accent" d="M20 290 C 170 230, 290 320, 500 230" />
+              <path class="l l5" d="M20 230 C 180 170, 300 250, 500 160" />
+              <path class="l l6" d="M20 170 C 190 110, 310 180, 500 95" />
+            </g>
+            <circle class="node" cx="330" cy="268" r="9" />
+            <circle class="node-ring" cx="330" cy="268" r="26" />
+          </svg>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 2 · AUDIENCE (icons grid) -->
+    <section class="section" aria-labelledby="who-title">
+      <div class="wrap">
+        <h2 id="who-title" class="title">Made for the people who decide.</h2>
+        <ul class="grid-3">
+          <li class="tile" data-reveal>
+            <svg class="icon" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="14" r="6"/><path d="M8 34c2-7 7-10 12-10s10 3 12 10"/></svg>
+            <h3>C-level executives</h3>
+            <p>CEOs, CFOs, COOs, CTOs and Chief Data or AI Officers who own the outcome, not just the pilot.</p>
+          </li>
+          <li class="tile" data-reveal>
+            <svg class="icon" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13"/><path d="M7 20h26M20 7c4 4 5 9 5 13s-1 9-5 13c-4-4-5-9-5-13s1-9 5-13"/></svg>
+            <h3>Global organisations</h3>
+            <p>Built for companies working across markets, regulators and business units at once.</p>
+          </li>
+          <li class="tile" data-reveal>
+            <svg class="icon" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 30l8-8 6 5 10-12"/><path d="M26 15h6v6"/></svg>
+            <h3>Ready to act</h3>
+            <p>For leaders past the "what is AI" stage who need priorities, budget and a plan to execute.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 3 · PROGRAMME (showcase with a day switch) -->
+    <section class="section section-dark" id="programme" aria-labelledby="prog-title">
+      <div class="wrap">
+        <h2 id="prog-title" class="title">Two days. One strategy.</h2>
+
+        <div class="tabs" role="tablist" aria-label="Programme days">
+          <span class="tabs-pill" aria-hidden="true"></span>
+          <button role="tab" id="tab-1" aria-controls="day-1" aria-selected="true">Day 1 <span>Where AI creates value</span></button>
+          <button role="tab" id="tab-2" aria-controls="day-2" aria-selected="false" tabindex="-1">Day 2 <span>How you make it happen</span></button>
+        </div>
+
+        <div class="day" role="tabpanel" id="day-1" aria-labelledby="tab-1">
+          <ol class="agenda">
+            <li><span>01</span><div><h3>The executive view of AI</h3><p>What today's models can and cannot do, without the hype. Where competitors are already investing.</p></div></li>
+            <li><span>02</span><div><h3>Mapping your value pools</h3><p>Find the processes, products and decisions in your business where AI moves revenue, cost or risk.</p></div></li>
+            <li><span>03</span><div><h3>Choosing your bets</h3><p>Score and rank opportunities by impact, feasibility and time to value. Agree on your first three.</p></div></li>
+          </ol>
+        </div>
+        <div class="day" role="tabpanel" id="day-2" aria-labelledby="tab-2" hidden>
+          <ol class="agenda">
+            <li><span>04</span><div><h3>Data, platforms and partners</h3><p>Build, buy or partner. What your data and technology estate must look like to deliver the bets.</p></div></li>
+            <li><span>05</span><div><h3>Governance, risk and regulation</h3><p>Responsible AI, the EU AI Act and cross-border rules, turned into decisions your board can sign.</p></div></li>
+            <li><span>06</span><div><h3>Your 12-month roadmap</h3><p>People, budget, operating model and milestones, assembled into a strategy you present before you leave.</p></div></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · OUTCOMES (showcase rows) -->
+    <section class="section" id="outcomes" aria-labelledby="out-title">
+      <div class="wrap">
+        <h2 id="out-title" class="title">What you take back to the board.</h2>
+        <div class="showcase">
+          <article class="show-row" data-reveal>
+            <p class="show-num">01</p>
+            <div><h3>A written AI strategy</h3><p>Your ambition, priorities and principles on a few pages, in the language of your business, not of technology.</p></div>
+          </article>
+          <article class="show-row" data-reveal>
+            <p class="show-num">02</p>
+            <div><h3>A ranked portfolio of use cases</h3><p>The first initiatives to fund, with expected value, owners and the conditions for success.</p></div>
+          </article>
+          <article class="show-row" data-reveal>
+            <p class="show-num">03</p>
+            <div><h3>A 12-month roadmap</h3><p>Milestones, budget ranges, governance and the team you need, ready for your next leadership meeting.</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · APPLY (call to action) -->
+    <section class="section section-apply" id="apply" aria-labelledby="apply-title">
+      <div class="wrap apply-grid">
+        <div class="apply-intro">
+          <h2 id="apply-title" class="title">Reserve your seat.</h2>
+          <p class="lead">Choose a session and tell us who you are. We confirm your seat and the exact dates by email within two working days.</p>
+          <div class="price">
+            <p><b>€5,000</b> per seat</p>
+            <ul>
+              <li>Two full days of facilitated work</li>
+              <li>All materials and templates</li>
+              <li>Your strategy document to keep</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- data-endpoint: our own server (server/server.js). It encrypts every application before saving it. -->
+        <form class="form" id="apply-form" data-endpoint="/api/apply" novalidate>
+          <fieldset class="sessions">
+            <legend>Session</legend>
+            <label class="session"><input type="radio" name="session" value="2027-02" required><span><b>February</b> 2027</span></label>
+            <label class="session"><input type="radio" name="session" value="2027-05"><span><b>May</b> 2027</span></label>
+            <label class="session"><input type="radio" name="session" value="2027-09"><span><b>September</b> 2027</span></label>
+          </fieldset>
+
+          <div class="row-2">
+            <label class="field"><span>First name</span><input name="firstName" autocomplete="given-name" required maxlength="60"></label>
+            <label class="field"><span>Last name</span><input name="lastName" autocomplete="family-name" required maxlength="60"></label>
+          </div>
+          <label class="field">
+            <span>Work email</span>
+            <input name="email" type="email" autocomplete="email" required maxlength="120" aria-describedby="email-hint">
+            <small class="hint" id="email-hint"></small>
+          </label>
+          <div class="row-2">
+            <label class="field"><span>Company</span><input name="company" autocomplete="organization" required maxlength="100"></label>
+            <label class="field">
+              <span>Role</span>
+              <select name="role" required>
+                <option value="">Choose</option>
+                <option>CEO</option><option>CFO</option><option>COO</option><option>CTO / CIO</option>
+                <option>Chief Data / AI Officer</option><option>Other C-level</option><option>Board member</option><option>Other</option>
+              </select>
+            </label>
+          </div>
+          <label class="field field-seats">
+            <span>Seats</span>
+            <input name="seats" type="number" inputmode="numeric" min="1" max="10" value="1" required>
+          </label>
+          <label class="field">
+            <span>Anything we should know? <em>(optional)</em></span>
+            <textarea name="notes" rows="3" maxlength="500"></textarea>
+          </label>
+
+          <label class="trap" aria-hidden="true"><span>Leave empty</span><input name="website" tabindex="-1" autocomplete="off"></label>
+
+          <label class="consent">
+            <input type="checkbox" name="consent" required>
+            <span>I agree that STRATA stores these details, encrypted, to process my application. They are never shared or sold.</span>
+          </label>
+
+          <div class="submit-row">
+            <button class="btn" type="submit">Request my seat</button>
+            <p class="total" aria-live="polite">Total: <b>€5,000</b></p>
+          </div>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
+
+        <div class="done" hidden tabindex="-1">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22"/><path d="M14 25l7 7 13-15"/></svg>
+          <h3>Request received.</h3>
+          <p>Your reference is <b class="ref"></b>. We will email you within two working days to confirm your seat.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · FAQ -->
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="wrap narrow">
+        <h2 id="faq-title" class="title">Questions.</h2>
+        <details><summary>Do I need a technical background?</summary><p>No. The workshop is built for business leaders. We focus on decisions, value and risk, not on code.</p></details>
+        <details><summary>What does the price include?</summary><p>Two days of facilitated sessions, all materials and templates, and the strategy document you build.</p></details>
+        <details><summary>When will I know the exact dates and venue?</summary><p>We confirm the dates and venue of your chosen session by email when we confirm your seat.</p></details>
+        <details><summary>Can I bring my leadership team?</summary><p>Yes. Choose the number of seats in the form. Teams that attend together usually leave with a more complete plan.</p></details>
+        <details><summary>How is my data protected?</summary><p>Your details travel over an encrypted connection and are stored encrypted. They are used only to process your application.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <p class="brand">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 11h22M5 16h16M5 21h10"/></svg>
+        STRATA
+      </p>
+      <nav aria-label="Footer">
+        <a href="#programme">Programme</a>
+        <a href="#apply">Apply</a>
+        <a href="#faq">FAQ</a>
+        <a href="#">Privacy</a>
+      </nav>
+      <small>© 2027 STRATA. Course exercise; layout adapted from Start Bootstrap Landing Page (MIT).</small>
+    </div>
+  </footer>
+
+</body>
+</html>
